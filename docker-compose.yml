@@ -1,0 +1,33 @@
+networks:
+  pypi-net:
+    driver: bridge
+
+volumes:
+  pypi-data:
+
+services:
+  pypi-server:
+    image: pypiserver/pypiserver:v2.4.1
+    ports:
+      - "9999:8080"
+    volumes:
+      - pypi-data:/data
+      - ./htpasswd:/data/.htpasswd
+    environment:
+      # Лимит увеличен до 4 ГБ
+      - BOTTLE_MAX_BODY=4294967296
+    command: run -v -P /data/.htpasswd -a update -p 8080 /data
+    restart: always
+    networks:
+      - pypi-net
+
+  pypi-server-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: pypi-server-test:1.0.0
+    networks:
+      - pypi-net
+    volumes:
+      - pypi-data:/data
+      - .:/app
